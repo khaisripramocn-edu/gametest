@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 เกมสื่อการสอนคอมพิวเตอร์</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700&display=swap');
+    body {
+      font-family: 'Prompt', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      margin: 0;
+      color: #222;
+      background: linear-gradient(270deg, #74b9ff, #a29bfe, #81ecec);
+      background-size: 600% 600%;
+      animation: gradientShift 15s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* ฟองอากาศพื้นหลัง */
+    .bubble {
+      position: absolute;
+      bottom: -100px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      animation: rise 8s infinite ease-in;
+      z-index: 0;
+    }
+    @keyframes rise {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-120vh) scale(1.5); opacity: 0; }
+    }
+
+    /* กล่องเนื้อหา */
+    .game-card {
+      max-width: 650px;
+      margin: 60px auto;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      padding: 30px;
+      position: relative;
+      z-index: 1;
+    }
+    .btn-answer {
+      width: 100%;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    .correct { background-color: #28a745 !important; color: white; }
+    .wrong { background-color: #dc3545 !important; color: white; }
+  </style>
+</head>
+<body>
+
+  <div class="container text-center">
+    <h1 class="mt-5 mb-3 text-light fw-bold animate__animated animate__bounceInDown">
+      🎮 เกมสื่อการสอนคอมพิวเตอร์
+    </h1>
+    <p class="text-light mb-4 animate__animated animate__fadeInUp">
+      เรียนรู้คอมพิวเตอร์ผ่านเกมแบบโต้ตอบ! 💡
+    </p>
+
+    <!-- หน้าเมนู -->
+    <div id="menu" class="game-card animate__animated animate__fadeIn">
+      <h4 class="mb-3">เลือกด่านที่ต้องการเล่น</h4>
+      <div id="lesson-buttons" class="mb-4"></div>
+      <button class="btn btn-outline-success w-100" onclick="showAddForm()">➕ เพิ่มคำถาม / ด่านใหม่</button>
+    </div>
+
+    <!-- หน้าเกม -->
+    <div id="game" class="game-card d-none animate__animated animate__fadeInUp">
+      <h4 id="question" class="mb-4"></h4>
+      <div id="answers" class="mb-3"></div>
+      <p id="score" class="text-secondary"></p>
+      <button id="next-btn" class="btn btn-info mt-3 d-none" onclick="nextQuestion()">ข้อต่อไป ➡️</button>
+    </div>
+
+    <!-- หน้าสรุป -->
+    <div id="result" class="game-card d-none animate__animated animate__zoomIn">
+      <h4 class="text-success fw-bold mb-3">🎉 สรุปคะแนน</h4>
+      <p id="final-score" class="fs-5 mb-4"></p>
+      <button class="btn btn-outline-primary" onclick="backToMenu()">กลับไปหน้าแรก</button>
+    </div>
+
+    <!-- ฟอร์มเพิ่มคำถาม -->
+    <div id="add-form" class="game-card d-none animate__animated animate__fadeIn">
+      <h4 class="mb-3 text-primary">➕ เพิ่มคำถามใหม่</h4>
+      <input type="text" id="lessonName" class="form-control mb-2" placeholder="ชื่อด่าน เช่น ด่านที่ 4: ระบบปฏิบัติการ">
+      <input type="text" id="questionText" class="form-control mb-2" placeholder="คำถาม">
+      <input type="text" id="ans1" class="form-control mb-2" placeholder="คำตอบที่ 1">
+      <input type="text" id="ans2" class="form-control mb-2" placeholder="คำตอบที่ 2">
+      <input type="text" id="ans3" class="form-control mb-2" placeholder="คำตอบที่ 3">
+      <input type="number" id="correctIndex" class="form-control mb-2" placeholder="หมายเลขคำตอบที่ถูก (0-2)">
+      <button class="btn btn-success w-100 mb-2" onclick="addQuestion()">บันทึกคำถาม</button>
+      <button class="btn btn-outline-secondary w-100" onclick="backToMenu()">กลับหน้าแรก</button>
+    </div>
+
+    <footer class="text-center text-light mt-5 mb-3">
+      © 2025 Computer Learning Game | สร้างโดย ครูผู้สอน 💻
+    </footer>
+  </div>
+
+  <script>
+    /* 🌈 เอฟเฟกต์ฟองอากาศ */
+    function createBubble() {
+      const bubble = document.createElement('div');
+      const size = Math.random() * 40 + 10;
+      bubble.classList.add('bubble');
+      bubble.style.width = `${size}px`;
+      bubble.style.height = `${size}px`;
+      bubble.style.left = `${Math.random() * 100}%`;
+      bubble.style.animationDuration = `${6 + Math.random() * 4}s`;
+      document.body.appendChild(bubble);
+      setTimeout(() => bubble.remove(), 9000);
+    }
+    setInterval(createBubble, 500);
+
+    /* 📚 ข้อมูลด่าน */
+    let lessons = JSON.parse(localStorage.getItem("lessons")) || {
+      "ด่านที่ 1: ส่วนประกอบคอมพิวเตอร์": [
+        { q: "CPU ทำหน้าที่อะไรในคอมพิวเตอร์?", a: ["แสดงผล", "ประมวลผล", "เก็บข้อมูล"], correct: 1 },
+        { q: "อุปกรณ์ใดเป็นหน่วยเก็บข้อมูล?", a: ["ฮาร์ดดิสก์", "คีย์บอร์ด", "ลำโพง"], correct: 0 },
+      ],
+      "ด่านที่ 2: อินเทอร์เน็ต": [
+        { q: "อินเทอร์เน็ตคืออะไร?", a: ["เครือข่ายคอมพิวเตอร์ทั่วโลก", "โปรแกรมพิมพ์งาน", "อุปกรณ์เก็บข้อมูล"], correct: 0 },
+        { q: "เว็บไซต์ใดใช้ค้นหาข้อมูล?", a: ["YouTube", "Google", "Facebook"], correct: 1 },
+      ],
+    };
+
+    let currentLesson = [];
+    let currentQuestion = 0;
+    let score = 0;
+    let totalQuestions = 0;
+
+    function renderLessonButtons() {
+      const div = document.getElementById("lesson-buttons");
+      div.innerHTML = "";
+      Object.keys(lessons).forEach(name => {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-primary w-100 mb-2 animate__animated animate__fadeIn";
+        btn.textContent = name;
+        btn.onclick = () => startLesson(name);
+        div.appendChild(btn);
+      });
+    }
+    renderLessonButtons();
+
+    function startLesson(name) {
+      document.getElementById("menu").classList.add("d-none");
+      document.getElementById("game").classList.remove("d-none");
+      currentLesson = shuffle([...lessons[name]]);
+      totalQuestions = currentLesson.length;
+      currentQuestion = 0;
+      score = 0;
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const q = currentLesson[currentQuestion];
+      document.getElementById("question").textContent = q.q;
+      const answersDiv = document.getElementById("answers");
+      answersDiv.innerHTML = "";
+      q.a.forEach((ans, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = ans;
+        btn.className = "btn btn-outline-primary btn-answer animate__animated animate__fadeInUp";
+        btn.onclick = () => checkAnswer(btn, i === q.correct);
+        answersDiv.appendChild(btn);
+      });
+      document.getElementById("score").textContent = `คะแนน: ${score}/${totalQuestions}`;
+      document.getElementById("next-btn").classList.add("d-none");
+    }
+
+    function checkAnswer(btn, correct) {
+      const buttons = document.querySelectorAll("#answers button");
+      buttons.forEach(b => b.disabled = true);
+      if (correct) {
+        btn.classList.add("correct", "animate__pulse");
+        score++;
+      } else {
+        btn.classList.add("wrong", "animate__shakeX");
+      }
+      document.getElementById("score").textContent = `คะแนน: ${score}/${totalQuestions}`;
+      document.getElementById("next-btn").classList.remove("d-none");
+    }
+
+    function nextQuestion() {
+      currentQuestion++;
+      if (currentQuestion < currentLesson.length) showQuestion();
+      else showResult();
+    }
+
+    function showResult() {
+      document.getElementById("game").classList.add("d-none");
+      document.getElementById("result").classList.remove("d-none");
+      document.getElementById("final-score").textContent = `คุณได้ ${score} คะแนน จาก ${totalQuestions} ข้อ`;
+    }
+
+    function backToMenu() {
+      document.getElementById("game").classList.add("d-none");
+      document.getElementById("result").classList.add("d-none");
+      document.getElementById("add-form").classList.add("d-none");
+      document.getElementById("menu").classList.remove("d-none");
+      renderLessonButtons();
+    }
+
+    function showAddForm() {
+      document.getElementById("menu").classList.add("d-none");
+      document.getElementById("add-form").classList.remove("d-none");
+    }
+
+    function addQuestion() {
+      const name = document.getElementById("lessonName").value.trim();
+      const q = document.getElementById("questionText").value.trim();
+      const a1 = document.getElementById("ans1").value.trim();
+      const a2 = document.getElementById("ans2").value.trim();
+      const a3 = document.getElementById("ans3").value.trim();
+      const correct = parseInt(document.getElementById("correctIndex").value);
+
+      if (!name || !q || [a1,a2,a3].includes("") || isNaN(correct)) {
+        alert("⚠️ กรุณากรอกข้อมูลให้ครบทุกช่อง!");
+        return;
+      }
+
+      if (!lessons[name]) lessons[name] = [];
+      lessons[name].push({ q, a: [a1, a2, a3], correct });
+      localStorage.setItem("lessons", JSON.stringify(lessons));
+
+      alert("✅ เพิ่มคำถามสำเร็จ!");
+      backToMenu();
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+  </script>
+</body>
+</html>
